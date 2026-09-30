@@ -57,6 +57,18 @@ export type ForwardPass = {
     logits: Matrix;
     probabilities: Vector;
     layerCount: number;
+    layers: {
+        queries: Matrix;
+        keys: Matrix;
+        values: Matrix;
+        rawScores: Matrix;
+        attention: Matrix;
+        context: Matrix;
+        residual: Matrix;
+        ffHidden: Matrix;
+        ffOutput: Matrix;
+        blockOutput: Matrix;
+    }[];
 };
 
 export function runTinyGpt(temperature: number, layerCount = 1): ForwardPass {
@@ -72,6 +84,7 @@ export function runTinyGpt(temperature: number, layerCount = 1): ForwardPass {
     let ffHidden = embedded;
     let ffOutput = embedded;
     let blockOutput = embedded;
+    const layers: ForwardPass["layers"] = [];
     for (let layer = 0; layer < layerCount; layer += 1) {
         queries = multiply(current, Wq);
         keys = multiply(current, Wk);
@@ -84,8 +97,9 @@ export function runTinyGpt(temperature: number, layerCount = 1): ForwardPass {
         ffOutput = multiply(ffHidden, W2);
         blockOutput = add(residual, ffOutput);
         current = blockOutput;
+        layers.push({ queries, keys, values, rawScores, attention, context, residual, ffHidden, ffOutput, blockOutput });
     }
     const logits = multiply(blockOutput, Wout);
     const probabilities = softmax(logits[logits.length - 1].map((logit) => logit / temperature));
-    return { embedded, queries, keys, values, rawScores, attention, context, residual, ffHidden, ffOutput, blockOutput, logits, probabilities, layerCount };
+    return { embedded, queries, keys, values, rawScores, attention, context, residual, ffHidden, ffOutput, blockOutput, logits, probabilities, layerCount, layers };
 }
