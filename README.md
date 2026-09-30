@@ -30,3 +30,7 @@ npm run dev
 Open `http://localhost:3000`.
 
 This is an educational forward-pass visualizer, not a production language model trainer. The next extension should add a small training loop and show how changing the weights changes the prediction.
+
+## Real GPT-2 checkpoint
+
+The **Load real GPT-2** control downloads the `Xenova/gpt2` ONNX conversion in the browser through the Xenova Transformers runtime. It shows the real GPT-2 BPE token IDs and the real next-token logits for the example sentence. The compact matrix flow remains available alongside it as an inspectable teaching model.

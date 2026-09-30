@@ -1,4 +1,5 @@
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import styles from "./index.module.css";
 import {
     Matrix,
@@ -15,6 +16,8 @@ import {
     tokens,
     vocabulary,
 } from "@/lib/tinyGpt";
+
+const RealModelPanel = dynamic(() => import("@/components/RealModelPanel"), { ssr: false });
 
 type Stage = "input" | "attention" | "block" | "prediction";
 
@@ -72,6 +75,8 @@ export default function Home() {
         <section className={styles.hero}><div><p className={styles.kicker}>Numbers in motion</p><h1>Trace one prediction<br /><i>from token to thought.</i></h1></div><p className={styles.heroCopy}>This is a deliberately tiny GPT. Every matrix is visible, every number is computed in your browser, and every stage can be inspected without hiding the algebra.</p></section>
 
         <section className={styles.path}><div className={styles.sectionLabel}><span>THE FORWARD PASS</span><span>6 tokens / 4 features / 1 head</span></div><div className={styles.pathRail}>{stages.map((stage) => <button key={stage.id} className={`${styles.pathStep} ${activeStage === stage.id ? styles.pathStepActive : ""}`} onClick={() => setActiveStage(stage.id)}><span>{stage.number}</span><strong>{stage.name}</strong></button>)}</div><p className={styles.stageHint}><b>{selectedStage.name}:</b> {selectedStage.description}</p></section>
+
+        <RealModelPanel />
 
         <section className={styles.inputBar}><div><span className={styles.inputLabel}>INPUT SEQUENCE</span><strong>What comes after &quot;The cat sat on the mat&quot;?</strong></div><div className={styles.tokenButtons}>{tokens.map((token, index) => <button className={focusRow === index ? styles.tokenActive : ""} key={`${token}-${index}`} onClick={() => setFocusRow(index)}>{token}<small>id {tokenIds[index]}</small></button>)}</div></section>
 
