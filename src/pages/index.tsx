@@ -9,6 +9,8 @@ import {
     ForwardPass,
     runTinyGpt,
     rounded,
+    positionEmbedding,
+    tokenEmbedding,
     tokenIds,
     tokens,
     vocabulary,
@@ -77,7 +79,7 @@ export default function Home() {
             <div className={styles.flowHeader}><div><span className={styles.sectionLabel}>MODEL FLOW</span><h2>Follow the numbers</h2></div><div className={styles.focusControl}><span>inspect row</span><select value={focusRow} onChange={(event) => setFocusRow(Number(event.target.value))}>{tokens.map((token, index) => <option value={index} key={token + index}>{index}: {token.trim()}</option>)}</select></div></div>
             <div className={styles.stageGrid}>
                 <StageCard id="input" active={activeStage === "input"} title="Embedding lookup" subtitle="01 / input" onClick={() => setActiveStage("input")}>
-                    <p className={styles.cardCopy}>The token row and its position row are added element by element. Click a token above to follow another row.</p><MatrixTable matrix={pass.embedded} rowLabels={rowLabels} colLabels={["d0", "d1", "d2", "d3"]} focusRow={focusRow} /><Formula>x[t] = token_embedding[id] + position_embedding[t]</Formula>
+                    <p className={styles.cardCopy}>The integer encoding selects one row from each table. Click a token above to follow another row.</p><div className={styles.encodingLine}><span>encoding</span><b>&quot;{tokens[focusRow].trim()}&quot;</b><b>id {tokenIds[focusRow]}</b><b>position {focusRow}</b></div><Vector values={tokenEmbedding[focusRow]} label="E token" /><Vector values={positionEmbedding[focusRow]} label="E pos" /><Vector values={pass.embedded[focusRow]} label="sum x" /><MatrixTable matrix={pass.embedded} rowLabels={rowLabels} colLabels={["d0", "d1", "d2", "d3"]} focusRow={focusRow} /><Formula>x[t] = E_token[id] + E_position[t]</Formula>
                 </StageCard>
 
                 <StageCard id="attention" active={activeStage === "attention"} title="Causal attention" subtitle="02 / context" onClick={() => setActiveStage("attention")}>
