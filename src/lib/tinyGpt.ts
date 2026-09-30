@@ -56,21 +56,36 @@ export type ForwardPass = {
     blockOutput: Matrix;
     logits: Matrix;
     probabilities: Vector;
+    layerCount: number;
 };
 
-export function runTinyGpt(temperature: number): ForwardPass {
+export function runTinyGpt(temperature: number, layerCount = 1): ForwardPass {
     const embedded = add(tokenEmbedding, positionEmbedding);
-    const queries = multiply(embedded, Wq);
-    const keys = multiply(embedded, Wk);
-    const values = multiply(embedded, Wv);
-    const rawScores = queries.map((query, rowIndex) => keys.map((key, columnIndex) => columnIndex > rowIndex ? Number.NEGATIVE_INFINITY : query.reduce((sum, value, index) => sum + value * key[index], 0) / 2));
-    const attention = rawScores.map((row) => softmax(row));
-    const context = attention.map((weights) => weights.map((_, dimension) => weights.reduce((sum, weight, index) => sum + weight * values[index][dimension], 0)));
-    const residual = add(embedded, context);
-    const ffHidden = relu(multiply(residual, W1));
-    const ffOutput = multiply(ffHidden, W2);
-    const blockOutput = add(residual, ffOutput);
+    let current = embedded;
+    let queries = embedded;
+    let keys = embedded;
+    let values = embedded;
+    let rawScores: Matrix = [];
+    let attention: Matrix = [];
+    let context: Matrix = [];
+    let residual = embedded;
+    let ffHidden = embedded;
+    let ffOutput = embedded;
+    let blockOutput = embedded;
+    for (let layer = 0; layer < layerCount; layer += 1) {
+        queries = multiply(current, Wq);
+        keys = multiply(current, Wk);
+        values = multiply(current, Wv);
+        rawScores = queries.map((query, rowIndex) => keys.map((key, columnIndex) => columnIndex > rowIndex ? Number.NEGATIVE_INFINITY : query.reduce((sum, value, index) => sum + value * key[index], 0) / 2));
+        attention = rawScores.map((row) => softmax(row));
+        context = attention.map((weights) => weights.map((_, dimension) => weights.reduce((sum, weight, index) => sum + weight * values[index][dimension], 0)));
+        residual = add(current, context);
+        ffHidden = relu(multiply(residual, W1));
+        ffOutput = multiply(ffHidden, W2);
+        blockOutput = add(residual, ffOutput);
+        current = blockOutput;
+    }
     const logits = multiply(blockOutput, Wout);
     const probabilities = softmax(logits[logits.length - 1].map((logit) => logit / temperature));
-    return { embedded, queries, keys, values, rawScores, attention, context, residual, ffHidden, ffOutput, blockOutput, logits, probabilities };
+    return { embedded, queries, keys, values, rawScores, attention, context, residual, ffHidden, ffOutput, blockOutput, logits, probabilities, layerCount };
 }

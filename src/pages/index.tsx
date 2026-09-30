@@ -62,8 +62,9 @@ function ParameterPanel({ title, matrix, note }: { title: string; matrix: Matrix
 export default function Home() {
     const [activeStage, setActiveStage] = useState<Stage>("attention");
     const [focusRow, setFocusRow] = useState(5);
+    const [selectedLayer, setSelectedLayer] = useState(1);
     const [temperature, setTemperature] = useState(0.8);
-    const pass: ForwardPass = runTinyGpt(temperature);
+    const pass: ForwardPass = runTinyGpt(temperature, selectedLayer);
     const topPredictions = pass.probabilities.map((probability, index) => ({ token: vocabulary[index], probability })).sort((left, right) => right.probability - left.probability).slice(0, 5);
     const rowLabels = tokens.map((token) => token.trim());
     const focusVector = pass.blockOutput[focusRow];
@@ -81,7 +82,7 @@ export default function Home() {
         <section className={styles.inputBar}><div><span className={styles.inputLabel}>INPUT SEQUENCE</span><strong>What comes after &quot;The cat sat on the mat&quot;?</strong></div><div className={styles.tokenButtons}>{tokens.map((token, index) => <button className={focusRow === index ? styles.tokenActive : ""} key={`${token}-${index}`} onClick={() => setFocusRow(index)}>{token}<small>id {tokenIds[index]}</small></button>)}</div></section>
 
         <section className={styles.flow}>
-            <div className={styles.flowHeader}><div><span className={styles.sectionLabel}>MODEL FLOW</span><h2>Follow the numbers</h2></div><div className={styles.focusControl}><span>inspect row</span><select value={focusRow} onChange={(event) => setFocusRow(Number(event.target.value))}>{tokens.map((token, index) => <option value={index} key={token + index}>{index}: {token.trim()}</option>)}</select></div></div>
+            <div className={styles.flowHeader}><div><span className={styles.sectionLabel}>MODEL FLOW</span><h2>Follow the numbers</h2><p className={styles.layerNote}>Teaching stack layer {selectedLayer} of 4. Each selected layer repeats the same Transformer block formula with a new input state.</p></div><div className={styles.focusControl}><span>layer</span><select value={selectedLayer} onChange={(event) => setSelectedLayer(Number(event.target.value))}>{[1, 2, 3, 4].map((layer) => <option value={layer} key={layer}>layer {layer}</option>)}</select><span>inspect row</span><select value={focusRow} onChange={(event) => setFocusRow(Number(event.target.value))}>{tokens.map((token, index) => <option value={index} key={token + index}>{index}: {token.trim()}</option>)}</select></div></div>
             <div className={styles.stageGrid}>
                 <StageCard id="input" active={activeStage === "input"} title="Embedding lookup" subtitle="01 / input" onClick={() => setActiveStage("input")}>
                     <p className={styles.cardCopy}>The integer encoding selects one row from each table. Click a token above to follow another row.</p><div className={styles.encodingLine}><span>encoding</span><b>&quot;{tokens[focusRow].trim()}&quot;</b><b>id {tokenIds[focusRow]}</b><b>position {focusRow}</b></div><Vector values={tokenEmbedding[focusRow]} label="E token" /><Vector values={positionEmbedding[focusRow]} label="E pos" /><Vector values={pass.embedded[focusRow]} label="sum x" /><MatrixTable matrix={pass.embedded} rowLabels={rowLabels} colLabels={["d0", "d1", "d2", "d3"]} focusRow={focusRow} /><Formula>x[t] = E_token[id] + E_position[t]</Formula>
